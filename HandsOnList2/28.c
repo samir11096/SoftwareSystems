@@ -16,16 +16,19 @@ int main()
 	int id ;
 
 	struct msqid_ds messageInfo;
+	key = ftok(".",3);
 
-	if(key=ftok(".",8)<0){
+	if(key<0){
 		perror("key program");
 	}
-
-	if(id = msgget(key , IPC_CREAT|IPC_EXCL|0666)<0)
+	printf("%d\n",key);
+	
+	id= msgget(key,IPC_CREAT|0666);
+	if(id <0)
 	{
 		perror("Message Queue Id Program");
 	}
-
+	printf("%d\n",id);
 
 	if(msgctl(id , IPC_STAT, &messageInfo)<0){
 		perror("Message Info Program.");
