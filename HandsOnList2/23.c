@@ -5,27 +5,37 @@ Name -> Samir Ahmed Ghouri
 Roll -> MT2022100
 */
 
-#include<fcntl.h>
 #include <unistd.h>    
 #include <sys/types.h> 
 #include <sys/stat.h>  
-#include <stdio.h> 
-#incl
+#include <stdio.h>     
+#include <errno.h>  
 
-int main()
+void main()
 {
+    int fifoStatus;  
+    long maxFiles;  
+    long sizeOfPipe;
 
-	long max_no_files = sysconf(_SC_OPEN_MAX);
+    char *fifoName = "23-fifo";
+    fifoStatus = mkfifo(fifoName, S_IRWXU);
 
-	if(max_no_files<0){
-		perror("sysconf program");
-	}
-	printf("Maximum Number of files that can be opened within a process is %ld.\n",max_no_files);
+    if (!(errno == EEXIST || fifoStatus != -1))
+        perror("Error while creating FIFO file!");
+    else
+    {
+        maxFiles = sysconf(_SC_OPEN_MAX);
 
-	//creating a pipe 
-	int fd[2];
-	pipe(fd);
-	//How to find the circular buffer 
-	int size = fcntl(fd ,  F_GETPIPE_SZ );
-	return 0;
+        if (maxFiles == -1)
+            perror("Error while calling sysconf!");
+        else
+            printf("Maximum number of files that can be opened is: %ld\n", maxFiles);
+
+        sizeOfPipe = pathconf(fifoName, _PC_PIPE_BUF);
+
+        if (sizeOfPipe == -1)
+            perror("Error while calling pathconf!");
+        else
+            printf("Maximum size of pipe: %ld\n", sizeOfPipe);
+    }
 }

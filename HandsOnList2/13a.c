@@ -14,8 +14,6 @@ void my_handler (int sig);
 int main()
 {
 	printf("The pid of the running process is %d.\n", getpid());
-
-    //A program cannot catch a SIGSTOP signal. We can conclude this by observing that the customHandler function is never executed and instead the program is terminated!
 	if(signal(SIGSTOP,my_handler)<0){
 		perror("signal program");
 	
