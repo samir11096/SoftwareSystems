@@ -8,124 +8,102 @@ Roll -> MT2022100
 */
 
 #include <sys/ipc.h>   
-#include <sys/sem.h>   
-#include <sys/types.h> 
-#include <sys/shm.h>   
+#include <sys/sem.h>  
+#include<sys/shm.h>
+#include <sys/types.h>
 #include <unistd.h>  
 #include <stdio.h>   
 
-void main()
+int main()
 {
-    key_t semKey;      
-    int semIdentifier; 
-    int semctlStatus;  
-    int semopStatus;   
+	int fd;
+	int status;
 
-    key_t shmKey;       
-    int shmIdentifier;  
-    ssize_t shmSize = 20;
-    char *shmPointer;
+	
+	//defining the value of sempahore
+	union semun {
+		int val;
+	} semSet;
 
+	//creating a key for semaphore set
+	key_t key = ftok(".",312);
+	
+	if(key<0){
+		perror("Error while creating the key");
+	}
+	
+	//checking if the semaphore set  is already created using flag =0
+	int id = semget(key , 1,0);
+	if(id<0)
+	{
+		//if not created , create a new semapore set
+		id = semget(key , 1, IPC_CREAT|0777);
+		if(id<0){
+			perror("Error while creating semaphore set");
+		}
 
-    union semun
-    {
-        int val;               
-        struct semid_ds *buf;  
-        unsigned short *array; 
-        struct seminfo *__buf; 
-    } semSet;
+		//initialsing the sempahore 
+		semSet.val = 1;
+		status = semctl(id,0,SETVAL,semSet);//defining the Othe semaphore of semaphore set 
+		if(status<0)
+		{
+			perror("Error while initialising the semaphore");
+		}
+	}
 
-    semKey = ftok(".", 3321);
-    if (semKey == -1)
-    {
-        perror("Error while computing key!");
-        _exit(1);
-    }
+	/*creating a shared memory */
 
-    semIdentifier = semget(semKey, 1, 0); 
-    if (semIdentifier == -1)
-    {
-        semIdentifier = semget(semKey, 1, IPC_CREAT | 0700);
-        if (semIdentifier == -1)
-        {
-            perror("Error while creating semaphore!");
-            _exit(1);
-        }
+	//creating a unique key
+	int shmkey = ftok(".",124);
+	if(shmkey<0){
+		perror("Error while creating a key for shared memory");
+	}
 
-        semSet.val = 1; 
-        semctlStatus = semctl(semIdentifier, 0, SETVAL, semSet);
-        if (semctlStatus == -1)
-        {
-            perror("Error while initializing a binary sempahore!");
-            _exit(1);
-        }
-    }
+	//getting the id for the created shared memory 
+	int shmid = shmget(shmkey , 20,IPC_CREAT|0700);
+	if(shmid<0){
+		perror("Error while creating shared memory");
+	}
 
-    shmKey = ftok(".", 3322);
+	//attaching the shared memory to a process address space
+	char* shmptr = shmat(shmid , (void *)0 , 0); // the last 0 means we are giving read wirte priviledges 
+	
+	if(shmptr<0){
+		perror("Error while attaching the shared memory");
+	}
 
-    if (shmKey == -1)
-    {
-        perror("Error while computing key!");
-        _exit(0);
-    }
+	
+	//sembuf contains sem_num , sem_op, sem_flg
+	struct sembuf semOp;
+	semOp.sem_num = 0; // semaphore number in the set
+	semOp.sem_flg = 0; // default behaviour of sem_op
 
-    shmIdentifier = shmget(shmKey, shmSize, IPC_CREAT | 0700);
+	printf("Press enter to obtain the lock on the critical section\n");
+	getchar();
+	semOp.sem_op =-1;
+	status = semop(id, &semOp , 1);
+	if(status<0){
+		perror("Error while operating on semaphores");
+	}
+	
+	printf("Enter a string to write to the critical section :");
+	scanf("%s",shmptr);
+	getchar();
 
-    if (shmIdentifier == -1)
-    {
-        perror("Error while getting Shared Memory!");
-        _exit(0);
-    }
+	printf("Successfully Written!!\n");
 
+	printf("Press Enter to exit the critical section\n");
+	getchar();
 
-    shmPointer = shmat(shmIdentifier, (void *)0, 0);
-
-    if (*shmPointer == -1)
-    {
-        perror("Error while attaching address space!");
-        _exit(0);
-    }
-
-
-    struct sembuf semOp; 
-    semOp.sem_num = 0;
-    semOp.sem_flg = 0;
-
-    printf("Press enter to lock the critical section!\n");
-    getchar();
-    
-    semOp.sem_op = -1;
-    semopStatus = semop(semIdentifier, &semOp, 1);
-    if (semopStatus == -1)
-    {
-        perror("Error while operating on semaphore!");
-        _exit(1);
-    }
-    
-    printf("Critical Section is now locked!\n");
-
-    printf("Start of the critical section!\n");
-
-
-    printf("Writing to the shared memory!\n");
-    sprintf(shmPointer, "Hello!!");
-
-    printf("Press enter to read from the shared memory!\n");
-    getchar();
-
-    printf("%s\n", shmPointer);
-
-    printf("Press enter to exit the critical section!\n");
-    getchar();
-
-
-    semOp.sem_op = 1;
-    semopStatus = semop(semIdentifier, &semOp, 1);
-    if (semopStatus == -1)
-    {
-        perror("Error while operating on semaphore!");
-        _exit(1);
-    }
-
-    printf("Critical section is now unlocked!\n");
+	// making the critical section available by setting it to the abs value 
+	semOp.sem_op = 1;
+	status = semop(id,&semOp, 1);
+	if(status<0){
+		perror("Error while operating on semaphore");
+	}
+	return 0;
 }
+
+	
+
+

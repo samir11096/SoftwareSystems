@@ -14,116 +14,98 @@ Roll -> MT2022100
 #include <unistd.h>  
 #include <stdio.h>   
 
-void main()
+int main()
 {
-    char *ticketFile = "ticket.txt"; 
+	int fd;
+	int readBytes , writeBytes;
+	int lseekoffset;
+	int status;
+	int data;
 
-    int fileDescriptor;            
-    ssize_t readBytes, writeBytes; 
-    off_t lseekOffset;
-    int data; 
+	//opening a file
+	fd = open("ticket.txt",O_RDWR|0666);
+	if(fd<0)
+	{
+		perror("Error while opening the file");
+	}
+	
+	//defining the value of sempahore
+	union semun {
+		int val;
+	} semSet;
 
-    key_t semKey;      
-    int semIdentifier; 
-    int semctlStatus; 
-    int semopStatus;  
+	//creating a key for semaphore set
+	key_t key = ftok(".",333);
+	
+	if(key<0){
+		perror("Error while creating the key");
+	}
+	
+	//checking if the semaphore set  is already created using flag =0
+	int id = semget(key , 1,0);
+	if(id<0)
+	{
+		//if not created , create a new semapore set
+		id = semget(key , 1, IPC_CREAT|0777);
+		if(id<0){
+			perror("Error while creating semaphore set");
+		}
 
-    fileDescriptor = open(ticketFile, O_CREAT | O_RDWR, S_IRWXU);
-    if (fileDescriptor == -1)
-    {
-        perror("Error while creating / opening the ticket file!");
-        _exit(0);
-    }
+		//initialsing the sempahore 
+		semSet.val = 1;
+		status = semctl(id,0,SETVAL,semSet);//defining the Othe semaphore of semaphore set 
+		if(status<0)
+		{
+			perror("Error while initialising the semaphore");
+		}
+	}
+	
+	//sembuf contains sem_num , sem_op, sem_flg
+	struct sembuf semOp;
+	semOp.sem_num = 0; // semaphore number in the set
+	semOp.sem_flg = 0; // default behaviour of sem_op
 
-    union semun
-    {
-        int val;               
-        struct semid_ds *buf;  
-        unsigned short *array; 
-        struct seminfo *__buf; 
-    } semSet;
+	printf("Press enter to obtain the lock on the critical section\n");
+	getchar();
+	semOp.sem_op =-1; // negative mean decrement and -1 means P() operation
+	status = semop(id, &semOp , 1);
+	if(status<0){
+		perror("Error while operating on semaphores");
+	}
 
-    semKey = ftok(".", 331);
-    if (semKey == -1)
-    {
-        perror("Error while computing key!");
-        _exit(1);
-    }
+	readBytes = read(fd,&data,sizeof(data));
 
-    semIdentifier = semget(semKey, 1, 0); 
-    if (semIdentifier == -1)
-    {
-        semIdentifier = semget(semKey, 1, IPC_CREAT | 0700);
-        if (semIdentifier == -1)
-        {
-            perror("Error while creating semaphore!");
-            _exit(1);
-        }
+	if(readBytes<0){
+		perror("Error while reading the file");
+	}
 
-        semSet.val = 1; 
-        semctlStatus = semctl(semIdentifier, 0, SETVAL, semSet);
-        if (semctlStatus == -1)
-        {
-            perror("Error while initializing a binary sempahore!");
-            _exit(1);
-        }
-    }
+	else if(readBytes ==0){
+		data = 1;
+	}
+	else{
+		data +=1;
+		lseekoffset = lseek(fd,0,SEEK_SET);
+		if(lseekoffset<0){
+			perror("Error while setting the offset of the file");
+		}
+	}
 
-    struct sembuf semOp; 
-    semOp.sem_num = 0;
-    semOp.sem_flg = 0;
+	writeBytes = write(fd, &data, sizeof(data));
+	if(writeBytes<0){
+		perror("Error while writing to the ticket file");
+	}
 
-    printf("Press enter to obtain lock on the critical section\n");
-    getchar();
-    semOp.sem_op = -1;
-    semopStatus = semop(semIdentifier, &semOp, 1);
-    if (semopStatus == -1)
-    {
-        perror("Error while operating on semaphore!");
-        _exit(1);
-    }
-    
-    printf("Obtained lock on critical section!\n");
-    printf("Now entering critical section!\n");
+	printf("Your ticket number is %d. \n",data);
+	printf("\n");
+	printf("Press enter to exit the critical section");
+	getchar();
 
-    readBytes = read(fileDescriptor, &data, sizeof(data));
-    if (readBytes == -1)
-    {
-        perror("Error while reading from ticket file!");
-        _exit(0);
-    }
-    else if (readBytes == 0)
-        data = 1;
-    else
-    {
-        data += 1;
-        lseekOffset = lseek(fileDescriptor, 0, SEEK_SET);
-        if (lseekOffset == -1)
-        {
-            perror("Error while seeking!");
-            _exit(0);
-        }
-    }
-
-    writeBytes = write(fileDescriptor, &data, sizeof(data));
-    if (writeBytes == -1)
-    {
-        perror("Error while writing to ticket file!");
-        _exit(1);
-    }
-
-    printf("Your ticker number is - %d\n", data);
-
-    printf("Press enter to exit from critical section!\n");
-    getchar();
-
-
-    semOp.sem_op = 1;
-    semopStatus = semop(semIdentifier, &semOp, 1);
-    if (semopStatus == -1)
-    {
-        perror("Error while operating on semaphore!");
-        _exit(1);
-    }
-    close(fileDescriptor);
+	// making the critical section available by setting it to the abs value 
+	semOp.sem_op = 1;//positive mean increment operation and +1 means V() operations
+	status = semop(id,&semOp, 1);
+	if(status<0){
+		perror("Error while operating on semaphore");
+	}
+	return 0;
 }
+

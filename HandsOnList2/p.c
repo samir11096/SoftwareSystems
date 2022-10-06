@@ -1,11 +1,3 @@
-/* Write a program to communicate between two machines using socket.
- *
- * Server
- *
- * Name -> Samir Ahmed Ghouri
- * Roll -> MT2022100
- * */
-
 #include<stdio.h>
 #include<unistd.h>
 #include<sys/types.h>

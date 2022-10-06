@@ -1,11 +1,3 @@
-/* 
-Write a program to communicate between two machines using socket.
-Client Side 
-
-Name -> Samir Ahmed Ghouri
-Roll -> MT2022100
-*/
-
 #include<stdio.h>
 #include<sys/types.h>
 #include<sys/socket.h>
@@ -61,3 +53,4 @@ int main()
 	close(sd);
 	return 0;
 }
+

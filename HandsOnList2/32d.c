@@ -11,35 +11,38 @@ Roll -> MT2022100
 #include <unistd.h>  
 #include <stdio.h>   
 
-void main()
+int main()
 {
     key_t semKey;
-    int semIndentifier;
-    int semctlStatus;
+    int id;
+    int status;
 
     semKey = ftok(".", 1);
     if (semKey == -1)
     {
         perror("Error while computing key!");
-        _exit(1);
     }
 
-    semIndentifier = semget(semKey, 1, IPC_CREAT | 0777);
+    printf("Press Enter to create a semaphore\n");
+    getchar();
 
-    if (semIndentifier == -1)
+    id = semget(semKey, 1, IPC_CREAT | 0700);
+
+    if (id == -1)
     {
         perror("Error while creating semaphore!");
-        _exit(1);
     }
+
+    printf("Semaphore created with id %d \n",id);
 
     printf("Press enter to delete the semaphore!\n");
     getchar();
 
-    semctlStatus = semctl(semIndentifier, 0, IPC_RMID);
+    status = semctl(id, 0, IPC_RMID);
 
-    if (semctlStatus == -1)
+    if (status == -1)
     {
         perror("Error while deleting semaphore!");
-        _exit(0);
     }
+    return 0;
 }
