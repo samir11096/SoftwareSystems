@@ -9,37 +9,9 @@
 #include<stdbool.h>
 
 #include "../constants/customer_constants.h"
+#include "../constants/constants.h"
 
 
-//defining customer structure for file storage
-struct Normal_Customer
-{
-    int id; // 0, 1, 2 ....
-    char name[25];
-    char gender; // M -> Male, F -> Female, O -> Other
-    int age;
-    // Login Credentials
-    char login[30]; // same as id
-    char password[30];
-    // Bank data
-    int account; // Account number of the customer
-    int balance;
-    
-};
-
-struct Joint_Customer
-{
-    int id; // 0 , 1 , 2 ....
-    char primary_name[25]; // Name of one account holder
-    char secondary_name[25];// Name of another account holder
-    char gender;// M -> Male , F -> Female 
-    int age;
-
-    //Login Credentials
-    char login[30]; // same as id
-    char password[30];
-    int account; // Account number of customer
-};
 
 
 //declaring requred function handlers

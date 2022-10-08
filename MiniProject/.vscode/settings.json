@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "admin_constants.h": "c"
+        "admin_constants.h": "c",
+        "constants.h": "c"
     }
 }

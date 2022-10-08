@@ -9,7 +9,12 @@
 
 // add customer
 #define ADMIN_ADD_CUSOMTER_MENU "Please Select the type of Customer to ADD: \n1.Normal Customer\n2.Joint Customer\n"
-
+#define ADMIN_NORMAL_CUSTOMER_NAME_PROMT "Enter Customer Name :\n"
+#define ADMIN_NORMAL_CUSTOMER_AGE_PROMT "Enter Customer Age :\n"
+#define ADMIN_NORMAL_CUSTOMER_GENDER_PROMT "Enter Customer Genger(M/F) :\n"
+#define ADMIN_NORMAL_CUSTOMER_PASSWORD_PROMT "Enter Customer Account Password :\n"
+#define ADMIN_NORMAL_CUSTOMER_CREATION_PROMT "Noraml Customer Successfully Created!!\n"
+#define ADMIN_UNABLE_CUSTOMER_CREATOIN_PROMT "Unable to create Customer!\n"
 
 
 
