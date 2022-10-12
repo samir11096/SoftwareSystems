@@ -22,9 +22,9 @@ bool add_customer(int connectionFD);//done
 void add_normal_customer(int connectionFD);//done
 void add_joint_customer(int connectinFD);//done
 void modify_customer_details();//not implementing due to time constraints
-void delete_customer(connectionFD);//done
-void delete_normal_customer(connectionFD);//done
-void delete_joint_customer(connectionFD);//done
+void delete_customer(int connectionFD);//done
+void delete_normal_customer(int connectionFD);//done
+void delete_joint_customer(int connectionFD);//done
 void check_customer_details(int connectionFD);//done
 void check_normal_customer_details(int connectionFD);//done
 void check_joint_customer_details(int connectionFD);//done
@@ -1002,7 +1002,7 @@ void check_joint_customer_details(int connectionFD){
     else{
         writeBytes = write(connectionFD,ADMIN_JOINT_CUSTOMER_NOT_PRESETN_PROMT,strlen(ADMIN_JOINT_CUSTOMER_NOT_PRESETN_PROMT));
         if(writeBytes<0){
-            perrror("Error while displaying that Joint customer not present prompt");
+            perror("Error while displaying that Joint customer not present prompt");
         }
     }
 }
@@ -1047,8 +1047,8 @@ void delete_customer(int connectionFD){
 void delete_normal_customer(int connectionFD){
     int readBytes , writeBytes;
     char readBuffer[500],writeBuffer[500];
-    bzero(writeBytes , sizeof(writeBytes));
-    bzero(readBytes ,sizeof(readBytes));
+    bzero(writeBuffer , sizeof(writeBuffer));
+    bzero(readBuffer ,sizeof(readBuffer));
 
     writeBytes = write(connectionFD,ADMIN_NORMAL_CUSTOMER_DELETE_ID_PROMT,strlen(ADMIN_NORMAL_CUSTOMER_DELETE_ID_PROMT));
     if(writeBytes<0){
@@ -1132,8 +1132,8 @@ void delete_joint_customer(int connectionFD){
     
     int readBytes , writeBytes;
     char readBuffer[500],writeBuffer[500];
-    bzero(writeBytes , sizeof(writeBytes));
-    bzero(readBytes ,sizeof(readBytes));
+    bzero(writeBuffer , sizeof(writeBuffer));
+    bzero(readBuffer ,sizeof(readBuffer));
 
     writeBytes = write(connectionFD,ADMIN_JOINT_CUSTOMER_DELETE_ID_PROMT,strlen(ADMIN_JOINT_CUSTOMER_DELETE_ID_PROMT));
     if(writeBytes<0){
