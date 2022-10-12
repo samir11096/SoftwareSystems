@@ -21,6 +21,7 @@ bool normal_customer_login_handler(int connectionFD);
 bool joint_customer_login_handler(int connectionFD);
 
 
+
 //defining required function handlers
 bool customer_login_handler(int connectionFD){
         int readBytes, writeBytes;
@@ -33,7 +34,7 @@ bool customer_login_handler(int connectionFD){
         strcpy(writeBuffer,LOGIN_PROMT);
         strcat(writeBuffer,LOGIN_CHOICE_PROMT);
 
-        writeBytes = write(connectionFD, writeBuffer,sizeof(writeBuffer));
+        writeBytes = write(connectionFD, writeBuffer,strlen(writeBuffer));
 
         if(writeBytes<0){
             perror("Error while displaying  login choice prompt to customer");
@@ -75,7 +76,7 @@ bool normal_customer_login_handler(int connectionFD){
 
     strcpy(writeBuffer,LOGIN_ID_PROMT);
     
-    writeBytes = write(connectionFD,writeBuffer,sizeof(writeBuffer));
+    writeBytes = write(connectionFD,writeBuffer,strlen(writeBuffer));
     if(writeBytes<0){
         perror("Error while normal customer login id prompt");
         return false;
@@ -96,9 +97,9 @@ bool normal_customer_login_handler(int connectionFD){
         return false;
     }
 
-    int offset= lseek(customerFD , customer_id*(sizeof(struct Normal_Customer)),SEEK_SET);
+    int offset= lseek(customerFD , (customer_id-1)*(sizeof(struct Normal_Customer)),SEEK_SET);
     if(offset<0){
-        writeBytes = write(connectionFD,LOGIN_ID_DOES_NOT_EXISTS,sizeof(LOGIN_ID_DOES_NOT_EXISTS));
+        writeBytes = write(connectionFD,LOGIN_ID_DOES_NOT_EXISTS,strlen(LOGIN_ID_DOES_NOT_EXISTS));
         return false;
     }
     else{
@@ -107,7 +108,7 @@ bool normal_customer_login_handler(int connectionFD){
 
         flk.l_type = F_RDLCK;
         flk.l_whence = SEEK_SET;
-        flk.l_start = customer_id*sizeof(struct Normal_Customer);
+        flk.l_start = (customer_id-1)*sizeof(struct Normal_Customer);
         flk.l_len = sizeof(struct Normal_Customer);
         flk.l_pid = getpid();
 
@@ -117,7 +118,11 @@ bool normal_customer_login_handler(int connectionFD){
             perror("Error while read locking the  Normal Customer file!");
             return false;
         }
-
+        
+        offset= lseek(customerFD , (customer_id-1)*(sizeof(struct Normal_Customer)),SEEK_SET);
+        if(offset<0){
+            perror("Error while trying to reposition the offset of normal customer details file");
+        }
         readBytes = read(customerFD,&customer,sizeof(struct Normal_Customer));
 
         if(readBytes <0){
@@ -134,7 +139,7 @@ bool normal_customer_login_handler(int connectionFD){
 
     bzero(writeBuffer,sizeof(writeBuffer));
     bzero(readBuffer,sizeof(readBuffer));
-    writeBytes = write(connectionFD , PASSWORD_PROMT,sizeof(PASSWORD_PROMT));
+    writeBytes = write(connectionFD , PASSWORD_PROMT,strlen(PASSWORD_PROMT));
     if(writeBytes<0){
         perror("Error while password prompt !");
         return false;
@@ -153,7 +158,7 @@ bool normal_customer_login_handler(int connectionFD){
     }
     else{
         bzero(writeBuffer, sizeof(writeBuffer));
-        writeBytes = write(connectionFD , INVALID_PASSWORD,sizeof(INVALID_PASSWORD));
+        writeBytes = write(connectionFD , INVALID_PASSWORD,strlen(INVALID_PASSWORD));
         return false;
     }
     
@@ -174,16 +179,16 @@ bool joint_customer_login_handler(int connectionFD){
 
     strcpy(writeBuffer,LOGIN_ID_PROMT);
     
-    writeBytes = write(connectionFD,writeBuffer,sizeof(writeBuffer));
+    writeBytes = write(connectionFD,writeBuffer,strlen(writeBuffer));
     if(writeBytes<0){
-        perror("Error while normal customer login id prompt");
+        perror("Error while joint customer login id prompt");
         return false;
     }
 
     readBytes = read(connectionFD , readBuffer , sizeof(readBuffer));
 
     if(readBytes<0){
-        perror("Error while normal customer login reading!");
+        perror("Error while joint customer login reading!");
         return false;
     }
 
@@ -195,9 +200,9 @@ bool joint_customer_login_handler(int connectionFD){
         return false;
     }
 
-    int offset= lseek(customerFD , customer_id*(sizeof(struct Normal_Customer)),SEEK_SET);
+    int offset= lseek(customerFD , (customer_id-1)*(sizeof(struct Joint_Customer)),SEEK_SET);
     if(offset<0){
-        writeBytes = write(connectionFD,LOGIN_ID_DOES_NOT_EXISTS,sizeof(LOGIN_ID_DOES_NOT_EXISTS));
+        writeBytes = write(connectionFD,LOGIN_ID_DOES_NOT_EXISTS,strlen(LOGIN_ID_DOES_NOT_EXISTS));
         return false;
     }
     else{
@@ -206,7 +211,7 @@ bool joint_customer_login_handler(int connectionFD){
 
         flk.l_type = F_RDLCK;
         flk.l_whence = SEEK_SET;
-        flk.l_start = customer_id*sizeof(struct Joint_Customer);
+        flk.l_start = (customer_id-1)*sizeof(struct Joint_Customer);
         flk.l_len = sizeof(struct Joint_Customer);
         flk.l_pid = getpid();
 
@@ -216,7 +221,10 @@ bool joint_customer_login_handler(int connectionFD){
             perror("Error while read locking the Joint Customer file!");
             return false;
         }
-
+        offset = lseek(customerFD,(customer_id-1)*(sizeof(struct Joint_Customer)),SEEK_SET);
+        if(offset<0){
+            perror("Error while trying to position the offset of joint customer details");
+        }
         readBytes = read(customerFD,&customer,sizeof(struct Joint_Customer));
 
         if(readBytes <0){
@@ -233,7 +241,7 @@ bool joint_customer_login_handler(int connectionFD){
 
     bzero(writeBuffer,sizeof(writeBuffer));
     bzero(readBuffer,sizeof(readBuffer));
-    writeBytes = write(connectionFD , PASSWORD_PROMT,sizeof(PASSWORD_PROMT));
+    writeBytes = write(connectionFD , PASSWORD_PROMT,strlen(PASSWORD_PROMT));
     if(writeBytes<0){
         perror("Error while password prompt !");
         return false;
@@ -252,7 +260,7 @@ bool joint_customer_login_handler(int connectionFD){
     }
     else{
         bzero(writeBuffer, sizeof(writeBuffer));
-        writeBytes = write(connectionFD , INVALID_PASSWORD,sizeof(INVALID_PASSWORD));
+        writeBytes = write(connectionFD , INVALID_PASSWORD,strlen(INVALID_PASSWORD));
         return false;
     }
     
