@@ -110,6 +110,7 @@ void connection_handler(int connectionFD){
 				case 2:
 					//customer
 					//customer_handler(connectionFD);
+					customer_handle(connectionFD);
 					break;
 				default:
 					//wrong option 

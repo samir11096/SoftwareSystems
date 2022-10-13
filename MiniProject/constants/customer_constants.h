@@ -18,3 +18,8 @@
 #define CUSTOMER_AMOUNT_WITHDRAW_PROMT "Enter the amount to be withdrawn:\n"
 #define CUSTOMER_INSUFFICIENT_BALANCE "Insufficient Balance!!\n"
 #define CUSTOMER_WITHDRAW_SUCCESS "Amount Withdrawn Successfully!!\n"
+#define CUUSTOMER_PASSWORD_CHANGE_SUCCESS "Password Changed!!\n"
+#define CUSTOMER_BALANCE_PROMT "The total balance is : "
+#define CUSTOMER_PASSWORD_CHANGE_PROMT "Enter a new password :\n"
+#define CUSTOMER_PASSWORD_CONFIRM_PROMT "Please confirm the password :\n"
+#define CUSTOMER_PASSWORD_NOT_MATCHED "Customer Confirming Password did not match!!\n"

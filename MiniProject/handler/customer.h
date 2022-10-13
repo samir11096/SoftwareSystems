@@ -21,8 +21,8 @@ bool normal_customer_login_handler(int connectionFD,int * login_id);
 bool joint_customer_login_handler(int connectionFD,int * login_id);
 void deposit(int connectionFD,int customer_type ,int customer_id);
 void withdraw(int connectionFD,int customer_type,int customer_id);
-void balance_enquiry(int connectionFD);
-void password_change(int connectionFD);
+void balance_enquiry(int connectionFDnt ,int customer_type , int customer_id);
+void password_change(int connectionFD,int customer_type , int customer_id);
 void view_details(int connectionFD);
 void exit();//TBD
 
@@ -161,7 +161,7 @@ bool normal_customer_login_handler(int connectionFD,int * login_id){
 
     strcpy(password,readBuffer);
 
-    if(strcmp(password,customer.password)){
+    if(!strcmp(password,customer.password)){
         return true;
     }
     else{
@@ -264,7 +264,7 @@ bool joint_customer_login_handler(int connectionFD,int * login_id){
 
     strcpy(password,readBuffer);
 
-    if(strcmp(password,customer.password)){
+    if(!strcmp(password,customer.password)){
         return true;
     }
     else{
@@ -308,10 +308,12 @@ void customer_handle(int connectionFD){
             
             case 3:
                 //balance enquiry
+                balance_enquiry(connectionFD,customer_type,customer_id);
                 break;
             
             case 4:
                 //password changes
+                password_change(connectionFD,customer_type,customer_id);
                 break;
             case 5:
                 //View account details
@@ -330,6 +332,7 @@ void deposit(int connectionFD ,int customer_type , int customer_id){
     char readBuffer[500], writeBuffer[500];
     bzero(readBuffer,sizeof(readBuffer));
     bzero(writeBuffer,sizeof(writeBuffer));
+    int offSet;
 
     writeBytes = write(connectionFD,CUSTOMER_AMOUNT_DEPOSIT_PROMT,strlen(CUSTOMER_AMOUNT_DEPOSIT_PROMT));
     if(writeBytes<0){
@@ -360,7 +363,7 @@ void deposit(int connectionFD ,int customer_type , int customer_id){
             perror("Error while trying to get a lock on normal customer file for deletion");
         }
 
-        int offSet = lseek(customerFD, (customer_id-1)*(sizeof(struct Noraml_Customer)),SEEK_SET);
+        offSet = lseek(customerFD, (customer_id-1)*(sizeof(struct Normal_Customer)),SEEK_SET);
         if(offSet<0){
             perror("Error while trying reposition the offset of the normal customer details file ");
         }
@@ -371,7 +374,7 @@ void deposit(int connectionFD ,int customer_type , int customer_id){
         //updating the balance
         customer.balance += amount_to_deposit;
 
-        int offSet = lseek(customerFD, (customer_id-1)*(sizeof(struct Noraml_Customer)),SEEK_SET);
+        offSet = lseek(customerFD, (customer_id-1)*(sizeof(struct Normal_Customer)),SEEK_SET);
         if(offSet<0){
             perror("Error while trying reposition the offset of the normal customer details file ");
         }
@@ -380,6 +383,14 @@ void deposit(int connectionFD ,int customer_type , int customer_id){
         if(writeBytes<0){
             perror("Error while updating the normal customer file for deposit");
         }
+
+        flk.l_type = F_UNLCK;
+        lockStatus=fcntl(customerFD,F_SETLK,&flk);
+        if(lockStatus<0){
+            perror("Error while tyring to unlock");
+        }
+
+
         
     }
     else if (customer_type ==2 ){
@@ -412,7 +423,7 @@ void deposit(int connectionFD ,int customer_type , int customer_id){
         //updating the balance
         customer.balance += amount_to_deposit;
 
-        int offSet = lseek(customerFD, (customer_id-1)*(sizeof(struct Joint_Customer)),SEEK_SET);
+        offSet = lseek(customerFD, (customer_id-1)*(sizeof(struct Joint_Customer)),SEEK_SET);
         if(offSet<0){
             perror("Error while trying reposition the offset of the joint customer details file ");
         }
@@ -421,6 +432,11 @@ void deposit(int connectionFD ,int customer_type , int customer_id){
         if(writeBytes<0){
             perror("Error while updating the joint customer file for deposit");
         }
+        flk.l_type = F_UNLCK;
+        lockStatus=fcntl(customerFD,F_SETLK,&flk);
+        if(lockStatus<0){
+            perror("Error while tyring to unlock");
+        }
         
     }
 
@@ -428,6 +444,7 @@ void deposit(int connectionFD ,int customer_type , int customer_id){
     if(writeBytes<0){
         perror("Error while trying to promt deposit sucess");
     }
+    close(customerFD);
 
 }
 
@@ -437,6 +454,7 @@ void withdraw(int connectionFD,int customer_type,int customer_id){
     char readBuffer[500], writeBuffer[500];
     bzero(readBuffer,sizeof(readBuffer));
     bzero(writeBuffer,sizeof(writeBuffer));
+    int offSet;
 
     writeBytes = write(connectionFD,CUSTOMER_AMOUNT_WITHDRAW_PROMT,strlen(CUSTOMER_AMOUNT_WITHDRAW_PROMT));
     if(writeBytes<0){
@@ -467,7 +485,7 @@ void withdraw(int connectionFD,int customer_type,int customer_id){
             perror("Error while trying to get a lock on normal customer file for deletion");
         }
 
-        int offSet = lseek(customerFD, (customer_id-1)*(sizeof(struct Noraml_Customer)),SEEK_SET);
+        offSet = lseek(customerFD, (customer_id-1)*(sizeof(struct Normal_Customer)),SEEK_SET);
         if(offSet<0){
             perror("Error while trying reposition the offset of the normal customer details file ");
         }
@@ -487,7 +505,7 @@ void withdraw(int connectionFD,int customer_type,int customer_id){
         //updating the balance on else condition
         customer.balance = bal;
 
-        int offSet = lseek(customerFD, (customer_id-1)*(sizeof(struct Noraml_Customer)),SEEK_SET);
+        offSet = lseek(customerFD, (customer_id-1)*(sizeof(struct Normal_Customer)),SEEK_SET);
         if(offSet<0){
             perror("Error while trying reposition the offset of the normal customer details file ");
         }
@@ -495,6 +513,11 @@ void withdraw(int connectionFD,int customer_type,int customer_id){
         writeBytes = write(customerFD,&customer,sizeof(struct Normal_Customer));
         if(writeBytes<0){
             perror("Error while updating the normal customer file for deposit");
+        }
+        flk.l_type = F_UNLCK;
+        lockStatus=fcntl(customerFD,F_SETLK,&flk);
+        if(lockStatus<0){
+            perror("Error while tyring to unlock");
         }
         
     }
@@ -517,7 +540,7 @@ void withdraw(int connectionFD,int customer_type,int customer_id){
             perror("Error while trying to get a lock on joint customer file for deletion");
         }
 
-        int offSet = lseek(customerFD, (customer_id-1)*(sizeof(struct Joint_Customer)),SEEK_SET);
+        offSet = lseek(customerFD, (customer_id-1)*(sizeof(struct Joint_Customer)),SEEK_SET);
         if(offSet<0){
             perror("Error while trying reposition the offset of the joint customer details file ");
         }
@@ -537,7 +560,7 @@ void withdraw(int connectionFD,int customer_type,int customer_id){
         //updating the balance on else condition
         customer.balance = bal;
 
-        int offSet = lseek(customerFD, (customer_id-1)*(sizeof(struct Joint_Customer)),SEEK_SET);
+        offSet = lseek(customerFD, (customer_id-1)*(sizeof(struct Joint_Customer)),SEEK_SET);
         if(offSet<0){
             perror("Error while trying reposition the offset of the joint customer details file ");
         }
@@ -546,6 +569,11 @@ void withdraw(int connectionFD,int customer_type,int customer_id){
         if(writeBytes<0){
             perror("Error while updating the joint customer file for deposit");
         }
+        flk.l_type = F_UNLCK;
+        lockStatus=fcntl(customerFD,F_SETLK,&flk);
+        if(lockStatus<0){
+            perror("Error while tyring to unlock");
+        }
         
     }
 
@@ -553,8 +581,258 @@ void withdraw(int connectionFD,int customer_type,int customer_id){
     if(writeBytes<0){
         perror("Error while trying to promt withdraw sucess");
     }
+    close(customerFD);
 
 }
 
+//read lock
+void balance_enquiry(int connectionFD ,int customer_type,int customer_id){
+    int readBytes , writeBytes ;
+    char readBuffer[500], writeBuffer[500];
+    bzero(readBuffer,sizeof(readBuffer));
+    bzero(writeBuffer,sizeof(writeBuffer));
+    int offSet;
 
-void balance_enquiry(int connectionFD ,int customer_type,int customer_id){}
+
+    int customerFD;
+    if(customer_type ==1 ){
+        struct Normal_Customer customer;
+        customerFD = open(NORMAL_CUSTOMER_DETAILS_FILE,O_RDONLY);
+        if(customerFD<0){
+            perror("Error while trying to open the normla customer details file");
+        }
+        struct flock flk;
+        flk.l_type=F_RDLCK;
+        flk.l_whence=SEEK_SET;
+        flk.l_start = (customer_id-1)*sizeof(struct Normal_Customer);
+        flk.l_len = sizeof(struct Normal_Customer);
+        flk.l_pid = getpid();
+
+        int lockStatus = fcntl(customerFD,F_SETLKW,&flk);
+        if(lockStatus<0){
+            perror("Error while trying to get a lock on normal customer file for deletion");
+        }
+
+        offSet = lseek(customerFD, (customer_id-1)*(sizeof(struct Normal_Customer)),SEEK_SET);
+        if(offSet<0){
+            perror("Error while trying reposition the offset of the normal customer details file ");
+        }
+        readBytes = read(customerFD,&customer,sizeof(struct Normal_Customer));
+        if(readBytes<0){
+            perror("Error while trying to read noraml customer to withdraw");
+        }
+        //getting  the balance
+
+        char bal[500];
+        bzero(bal,sizeof(bal));
+        sprintf(bal,"%f",customer.balance);
+        strcpy(writeBuffer,CUSTOMER_BALANCE_PROMT);
+        strcat(writeBuffer,bal);
+        strcat(writeBuffer,"\n");
+        
+        
+
+        writeBytes = write(connectionFD, writeBuffer,strlen(writeBuffer));
+        if(writeBytes<0){
+            perror("Error while trying to display the balance");
+        }
+        flk.l_type = F_UNLCK;
+        lockStatus=fcntl(customerFD,F_SETLK,&flk);
+        if(lockStatus<0){
+            perror("Error while tyring to unlock");
+        }
+        
+
+    }
+    else if (customer_type ==2 ){
+
+        struct Joint_Customer customer;
+        customerFD = open(JOINT_CUSTOMER_DETAILS_FILE,O_RDWR);
+        if(customerFD<0){
+            perror("Error while trying to open the joint customer details file");
+        }
+        struct flock flk;
+        flk.l_type=F_WRLCK;
+        flk.l_whence=SEEK_SET;
+        flk.l_start = (customer_id-1)*sizeof(struct Joint_Customer);
+        flk.l_len = sizeof(struct Joint_Customer);
+        flk.l_pid = getpid();
+
+        int lockStatus = fcntl(customerFD,F_SETLKW,&flk);
+        if(lockStatus<0){
+            perror("Error while trying to get a lock on joint customer file for deletion");
+        }
+
+        offSet = lseek(customerFD, (customer_id-1)*(sizeof(struct Joint_Customer)),SEEK_SET);
+        if(offSet<0){
+            perror("Error while trying reposition the offset of the joint customer details file ");
+        }
+        readBytes = read(customerFD,&customer,sizeof(struct Joint_Customer));
+        if(readBytes<0){
+            perror("Error while trying to read joint customer to withdraw");
+        }
+        //getting  the balance
+        char bal[10];
+        sprintf(bal,"%f",customer.balance);
+        strcpy(writeBuffer,CUSTOMER_BALANCE_PROMT);
+        strcat(CUSTOMER_BALANCE_PROMT,bal);
+        strcat(writeBuffer,"\n");
+        
+        
+
+        writeBytes = write(connectionFD, writeBuffer,strlen(writeBuffer));
+        if(writeBytes<0){
+            perror("Error while trying to display the balance");
+        } 
+        flk.l_type = F_UNLCK;
+        lockStatus=fcntl(customerFD,F_SETLK,&flk);
+        if(lockStatus<0){
+            perror("Error while tyring to unlock");
+        }
+    }
+    close(customerFD);
+
+   
+}
+
+
+
+void password_change(int connectionFD,int customer_type,int customer_id){
+
+    int readBytes , writeBytes ;
+    char readBuffer[500], writeBuffer[500],new_password[500];
+    bzero(readBuffer,sizeof(readBuffer));
+    bzero(writeBuffer,sizeof(writeBuffer));
+    bzero(new_password,sizeof(new_password));
+    int offSet;
+
+    writeBytes = write(connectionFD,CUSTOMER_PASSWORD_CHANGE_PROMT,strlen(CUSTOMER_PASSWORD_CHANGE_PROMT));
+    if(writeBytes<0){
+        perror("Error while displaying the password change promot");
+    }
+    readBytes = read(connectionFD,readBuffer,sizeof(readBuffer));
+    if(readBytes<0){
+        perror("Error while trying to read password ");
+    }
+
+    writeBytes = write(connectionFD,CUSTOMER_PASSWORD_CONFIRM_PROMT,strlen(CUSTOMER_PASSWORD_CONFIRM_PROMT));
+    if(writeBytes<0){
+        perror("Error while displaying the password confirm promot");
+    }
+    readBytes = read(connectionFD,new_password,sizeof(new_password));
+    if(readBytes<0){
+        perror("Error while trying to read confirmed password ");
+    }
+
+    if(!strcmp(readBuffer,new_password)){
+
+        int customerFD;
+        if(customer_type ==1 ){
+            struct Normal_Customer customer;
+            customerFD = open(NORMAL_CUSTOMER_DETAILS_FILE,O_RDWR);
+            if(customerFD<0){
+                perror("Error while trying to open the normla customer details file");
+            }
+            struct flock flk;
+            flk.l_type=F_WRLCK;
+            flk.l_whence=SEEK_SET;
+            flk.l_start = (customer_id-1)*sizeof(struct Normal_Customer);
+            flk.l_len = sizeof(struct Normal_Customer);
+            flk.l_pid = getpid();
+
+            int lockStatus = fcntl(customerFD,F_SETLKW,&flk);
+            if(lockStatus<0){
+                perror("Error while trying to get a lock on normal customer file for deletion");
+            }
+
+            offSet = lseek(customerFD, (customer_id-1)*(sizeof(struct Normal_Customer)),SEEK_SET);
+            if(offSet<0){
+                perror("Error while trying reposition the offset of the normal customer details file ");
+            }
+            readBytes = read(customerFD,&customer,sizeof(struct Normal_Customer));
+            if(readBytes<0){
+                perror("Error while trying to read noraml customer to change password");
+            }
+            //updating the password
+            bzero(customer.password,sizeof(customer.password));
+            strcpy(customer.password,new_password);
+
+            offSet = lseek(customerFD, (customer_id-1)*(sizeof(struct Normal_Customer)),SEEK_SET);
+            if(offSet<0){
+                perror("Error while trying reposition the offset of the normal customer details file ");
+            }
+
+            writeBytes = write(customerFD,&customer,sizeof(struct Normal_Customer));
+            if(writeBytes<0){
+                perror("Error while updating the normal customer file for pasword");
+            }
+            flk.l_type = F_UNLCK;
+            lockStatus=fcntl(customerFD,F_SETLK,&flk);
+            if(lockStatus<0){
+                perror("Error while tyring to unlock");
+            }
+            
+        }
+        else if (customer_type ==2 ){
+
+            struct Joint_Customer customer;
+            customerFD = open(JOINT_CUSTOMER_DETAILS_FILE,O_RDWR);
+            if(customerFD<0){
+                perror("Error while trying to open the Joint customer details file");
+            }
+            struct flock flk;
+            flk.l_type=F_WRLCK;
+            flk.l_whence=SEEK_SET;
+            flk.l_start = (customer_id-1)*sizeof(struct Joint_Customer);
+            flk.l_len = sizeof(struct Joint_Customer);
+            flk.l_pid = getpid();
+
+            int lockStatus = fcntl(customerFD,F_SETLKW,&flk);
+            if(lockStatus<0){
+                perror("Error while trying to get a lock on joint customer file for password change");
+            }
+
+            offSet = lseek(customerFD, (customer_id-1)*(sizeof(struct Joint_Customer)),SEEK_SET);
+            if(offSet<0){
+                perror("Error while trying reposition the offset of the joint customer details file ");
+            }
+            readBytes = read(customerFD,&customer,sizeof(struct Joint_Customer));
+            if(readBytes<0){
+                perror("Error while trying to read joint customer to withdraw");
+            }
+            //updating the balance
+
+            bzero(customer.password,sizeof(customer.password));
+            strcpy(customer.password,new_password);
+            
+            offSet = lseek(customerFD, (customer_id-1)*(sizeof(struct Joint_Customer)),SEEK_SET);
+            if(offSet<0){
+                perror("Error while trying reposition the offset of the joint customer details file ");
+            }
+
+            writeBytes = write(customerFD,&customer,sizeof(struct Joint_Customer));
+            if(writeBytes<0){
+                perror("Error while updating the joint customer file for password change");
+            }
+
+            flk.l_type = F_UNLCK;
+            lockStatus=fcntl(customerFD,F_SETLK,&flk);
+            if(lockStatus<0){
+                perror("Error while tyring to unlock");
+            }
+            
+        }
+
+        writeBytes = write(connectionFD,CUUSTOMER_PASSWORD_CHANGE_SUCCESS,strlen(CUSTOMER_PASSWORD_CHANGE_PROMT));
+        if(writeBytes<0){
+            perror("Error while trying to promt password change sucess");
+        }
+    }
+    else{
+        writeBytes = write(connectionFD,CUSTOMER_PASSWORD_NOT_MATCHED,strlen(CUSTOMER_PASSWORD_NOT_MATCHED));
+        if(writeBytes<0){
+            perror("Error while displaying confirmed password not mathched prompt");
+        }
+    }
+
+}
