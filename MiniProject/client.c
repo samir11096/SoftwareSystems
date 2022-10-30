@@ -57,7 +57,6 @@ void connection_handler(int socketFD){
 
         bzero(readBuffer,sizeof(readBuffer));
         bzero(writeBuffer,sizeof(writeBuffer));
-
         scanf("%s",writeBuffer);
         writeBytes = write(socketFD,writeBuffer,strlen(writeBuffer));
         if(writeBytes <0){
@@ -71,8 +70,12 @@ void connection_handler(int socketFD){
             return ;
         }
 
+        if(strcmp(readBuffer,"Wrong Input!!")==0){
+            printf(".\n");
+        }
+
         printf("%s\n",readBuffer);
-    
+         
     }
 
 

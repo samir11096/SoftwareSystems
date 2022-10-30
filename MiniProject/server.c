@@ -114,6 +114,8 @@ void connection_handler(int connectionFD){
 					break;
 				default:
 					//wrong option 
+					writeBytes = write(connectionFD, WRONG_INPUT,strlen(WRONG_INPUT));
+					connection_handler(connectionFD);
 					break;
 			}
 		}

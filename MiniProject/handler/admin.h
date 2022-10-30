@@ -70,7 +70,6 @@ void admin_handler(int connectionFD){
         bzero(writeBuffer , sizeof(writeBuffer));
 
         strcpy(writeBuffer ,ADMIN_LOGIN_SUCCESS);
-       //using while loop 
         strcpy(writeBuffer, ADMIN_MENU);
         writeBytes = write(connectionFD,writeBuffer,strlen(writeBuffer));
         if(writeBytes<0){
@@ -88,16 +87,16 @@ void admin_handler(int connectionFD){
                 add_customer(connectionFD);
                 break;
             case 2:
-                //modify_customer_details();
-                break;
-            case 3:
                 //delete_customer();
                 break;
-            case 4:
+            case 3:
                 //check_customer_details();
                 check_customer_details(connectionFD);
                 break;
             default:
+                //wrong input 
+                writeBytes  = write(connectionFD, WRONG_INPUT ,strlen(WRONG_INPUT));
+                admin_handler(connectionFD);
                 break;
         }
 
@@ -106,9 +105,8 @@ void admin_handler(int connectionFD){
 
     else {
        bzero(writeBuffer,sizeof(writeBuffer));
-       strcpy(writeBuffer,ADMIN_LOGIN_FAILED);
-
-       writeBytes = write(connectionFD,writeBuffer , strlen(writeBuffer));
+       writeBytes = write(connectionFD,ADMIN_LOGIN_FAILED, strlen(ADMIN_LOGIN_FAILED));
+       admin_handler(connectionFD);
        if(writeBytes<0){
         perror("Error while diplaying admin login failed prompt");
        }

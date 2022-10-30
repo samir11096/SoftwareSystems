@@ -1,4 +1,5 @@
 #define INITIAL_DAILOGUE "=======Welocome to The Bank.=======\nPlease select your login type:\n1.Admin\t2.Customer\nEnter your option here: "
+#define WRONG_INPUT "Wrong Input!!\n"
 
 //using #ifndef to check if its is not defined twice
 #ifndef NORMAL_CUSTOMER
